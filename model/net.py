@@ -33,7 +33,9 @@ class Net(tnn.Module):
             out: (torch.Tensor) output of the network forward pass
         """
         x = self.bn1(self.conv1(x))
-        x = F.dropout(F.relu(self.fc1(x)), p=self.dropout_rate, training=self.training)
+        x = F.dropout(F.relu(self.fc1(x)),
+                      p=self.dropout_rate,
+                      training=self.training)
         return F.log_softmax(x, dim=1)
 
 
