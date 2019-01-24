@@ -14,6 +14,7 @@ model/
     __init__.py
     data_loader.py
     net.py
+.gitignore
 README.md
 evaluate.py
 requirements.txt
