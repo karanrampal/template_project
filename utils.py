@@ -4,6 +4,7 @@
 
 import json
 import logging
+import os
 
 class Params():
     """Class to load hyperparameters from a json file.
@@ -46,3 +47,11 @@ def set_logger(log_path):
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(stream_handler)
+
+def safe_makedir(path):
+    """Make directory given the path if it doesn't already exist
+    Args:
+        path: path of the directory to be made
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
