@@ -48,6 +48,16 @@ def set_logger(log_path):
         stream_handler.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(stream_handler)
 
+def save_dict_to_json(data, json_path):
+    """Saves a dict of floats to json file
+    Args:
+        data: (dict) of float-castable values (np.float, int, float, etc.)
+        json_path: (string) path to json file
+    """
+    with open(json_path, 'w') as f:
+        data = {k: float(v) for k, v in data.items()}
+        json.dump(data, f, indent=4)
+
 def safe_makedir(path):
     """Make directory given the path if it doesn't already exist
     Args:
