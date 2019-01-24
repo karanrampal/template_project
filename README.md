@@ -1,10 +1,11 @@
-# A template for future projects
+# Template for projects
 
 This is a template, for future projects, which can be hosted on Github. After cloning and manipulating the git directory (deleting :wink:) it can be used as starting point for any other project.
 
 Contains starter code for model creation, training, testing and evaluation using Pytorch. Hence no need to create these from scratch everytime, just modify the relevant files for the particular project.
 
 ## Directory structure
+Structure of the project
 ```
 experiments/
     base_model/
