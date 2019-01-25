@@ -19,7 +19,7 @@ EVAL_TRANSFORMER = tx.Compose([tx.Resize(28),
 class MyDataset(Dataset):
     """Define a dataset in PyTorch.
     """
-    def __init__(self, data_path, transform):
+    def __init__(self, data_path, transform=None):
         """
         Get the filenames of images and labels from a csv file.
         Args:
@@ -44,7 +44,8 @@ class MyDataset(Dataset):
             label: (int) corresponding label of image
         """
         image = Image.open(self.data[idx, 0])
-        image = self.transform(image)
+        if self.transform:
+            image = self.transform(image)
         label = self.data[idx, 1]
         return image, label
 
