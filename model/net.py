@@ -11,8 +11,7 @@ class Net(tnn.Module):
     """Extend the torch.nn.Module class to define a custom neural network
     """
     def __init__(self, params):
-        """
-        Initialize the different layers in the neural network
+        """Initialize the different layers in the neural network
         Args:
             params: (Params) contains hyperparameters
         """
@@ -25,8 +24,7 @@ class Net(tnn.Module):
         self.dropout_rate = params.dropout_rate
 
     def forward(self, x):
-        """
-        Defines the forward propagation through the network
+        """Defines the forward propagation through the network
         Args:
             x: (torch.Tensor) contains a batch of images.
         Returns:
@@ -40,8 +38,7 @@ class Net(tnn.Module):
 
 
 def loss_fn(outputs, ground_truth):
-    """
-    Compute the loss given outputs and ground_truth.
+    """Compute the loss given outputs and ground_truth.
     Args:
         outputs: (torch.Tensor) output of network forward pass
         ground_truth: (torch.Tensor) batch of ground truth
@@ -54,8 +51,7 @@ def loss_fn(outputs, ground_truth):
 
 
 def accuracy(outputs, labels):
-    """
-    Compute the accuracy, given the outputs and labels for all images.
+    """Compute the accuracy, given the outputs and labels for all images.
     Args:
         outputs: (np.ndarray) output of the network
         labels: (np.ndarray) ground truth labels
