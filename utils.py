@@ -12,7 +12,6 @@ import torch
 class Params():
     """Class to load hyperparameters from a json file.
     """
-
     def __init__(self, json_path):
         with open(json_path) as f:
             params = json.load(f)
@@ -69,11 +68,7 @@ def save_checkpoint(state, is_best, checkpoint):
         checkpoint: (string) folder where parameters are to be saved
     """
     filepath = os.path.join(checkpoint, 'last.pth.tar')
-    if not os.path.exists(checkpoint):
-        print("Checkpoint Directory does not exist! Making directory {}".format(checkpoint))
-        os.mkdir(checkpoint)
-    else:
-        print("Checkpoint Directory exists!")
+    safe_makedir(checkpoint)
     torch.save(state, filepath)
     if is_best:
         shutil.copyfile(filepath, os.path.join(checkpoint, 'best.pth.tar'))
@@ -101,4 +96,7 @@ def safe_makedir(path):
         path: path of the directory to be made
     """
     if not os.path.exists(path):
+        print("Directory doesn't exist! Making directory {0}.".format(path))
         os.makedirs(path)
+    else:
+        print("Directory Exists!")
