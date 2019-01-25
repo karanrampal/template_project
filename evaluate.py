@@ -38,32 +38,26 @@ def evaluate(model, criterion, dataloader, metrics, params):
         params: (Params) hyperparameters
         num_steps: (int) number of batches to train on, each of size params.batch_size
     """
-
-    # set model to evaluation mode
+    # put model in evaluation mode
     model.eval()
-
-    # summary for current eval loop
     summ = []
 
-    # compute metrics over the dataset
-    for data_batch, _ in dataloader:
-
-        data_batch = data_batch.view(data_batch.size(0), -1)
-
-        # move to GPU if available
+    for inp_data, labels in dataloader:
+        # move data to GPU if possible
         if params.cuda:
-            data_batch = data_batch.to(params.device)
+            inp_data = inp_data.to(params.device)
+            labels = labels.to(params.device)
 
         # compute model output
-        output_batch = model(data_batch)
-        loss = criterion(output_batch, data_batch)
+        output = model(inp_data)
+        loss = criterion(output, labels)
 
-        # extract data from torch Variable, move to cpu, convert to numpy arrays
-        output_batch = output_batch.data.cpu().numpy()
+        # detach and move to cpu, convert to numpy arrays
+        output = output.data.cpu().numpy()
+        labels = labels.data.cpu().numpy()
 
         # compute all metrics on this batch
-        summary_batch = {metric: metrics[metric](output_batch, data_batch.data.cpu().numpy())
-                         for metric in metrics}
+        summary_batch = {metric: metrics[metric](output, labels) for metric in metrics}
         summary_batch['loss'] = loss.item()
         summ.append(summary_batch)
 
@@ -94,10 +88,9 @@ def main():
     else:
         params.device = "cpu"
 
-    # Get the logger
+    # Set the logger
     utils.set_logger(os.path.join(args.model_dir, 'evaluate.log'))
 
-    # Create the input data pipeline
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
@@ -109,7 +102,7 @@ def main():
     # Define the model
     model = Net(params)
     if params.cuda:
-        model = model.cuda()
+        model = model.to(params.device)
 
     criterion = loss_fn
     metrics = get_metrics()
