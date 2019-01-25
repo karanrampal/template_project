@@ -15,6 +15,7 @@ model/
     data_loader.py
     net.py
 .gitignore
+LICENSE
 README.md
 evaluate.py
 requirements.txt
