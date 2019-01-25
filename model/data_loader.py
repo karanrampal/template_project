@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Define custom dataset class extending the Pytorch Dataset class
 """
+
 import pandas as pd
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as tx
 import torchvision.datasets as ds
 
+# Add transformations into the constants below.
 TRAIN_TRANSFORMER = tx.Compose([tx.Resize(28),
                                 tx.RandomHorizontalFlip(),
                                 tx.ToTensor(),
@@ -20,8 +22,7 @@ class MyDataset(Dataset):
     """Define a dataset in PyTorch.
     """
     def __init__(self, data_path, transform=None):
-        """
-        Get the filenames of images and labels from a csv file.
+        """Get the filenames and labels of images from a csv file.
         Args:
             data_path: (string) directory containing the dataset
             transform: (torchvision.transforms) transformation to apply on images
@@ -30,13 +31,12 @@ class MyDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        """Return the size of dataset
+        """Return the size of the dataset.
         """
         return len(self.data)
 
     def __getitem__(self, idx):
-        """
-        Get an image and label at index idx from the dataset. Perform transforms on image.
+        """Get an image and label at index idx from the dataset. Perform transforms on image.
         Args:
             idx: (int) index in [0, 1, ..., size_of_dataset-1]
         Returns:
@@ -51,8 +51,7 @@ class MyDataset(Dataset):
 
 
 def get_dataloader(modes, data_dir, params):
-    """
-    Get DataLoader object from data_dir.
+    """Get DataLoader objects from data_dir.
     Args:
         modes: (list) mode of operation i.e. 'train', 'val', 'test'
         data_dir: (string) directory containing the dataset
