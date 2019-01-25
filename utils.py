@@ -5,6 +5,9 @@
 import json
 import logging
 import os
+import shutil
+
+import torch
 
 class Params():
     """Class to load hyperparameters from a json file.
@@ -57,6 +60,40 @@ def save_dict_to_json(data, json_path):
     with open(json_path, 'w') as f:
         data = {k: float(v) for k, v in data.items()}
         json.dump(data, f, indent=4)
+
+def save_checkpoint(state, is_best, checkpoint):
+    """Saves model at checkpoint
+    Args:
+        state: (dict) contains model's state_dict, epoch, optimizer state_dict etc.
+        is_best: (bool) True if it is the best model seen till now
+        checkpoint: (string) folder where parameters are to be saved
+    """
+    filepath = os.path.join(checkpoint, 'last.pth.tar')
+    if not os.path.exists(checkpoint):
+        print("Checkpoint Directory does not exist! Making directory {}".format(checkpoint))
+        os.mkdir(checkpoint)
+    else:
+        print("Checkpoint Directory exists!")
+    torch.save(state, filepath)
+    if is_best:
+        shutil.copyfile(filepath, os.path.join(checkpoint, 'best.pth.tar'))
+
+def load_checkpoint(checkpoint, model, optimizer=None):
+    """Loads model state_dict from checkpoint.
+    Args:
+        checkpoint: (string) filename which needs to be loaded
+        model: (torch.nn.Module) model for which the parameters are loaded
+        optimizer: (torch.optim) optional: resume optimizer from checkpoint
+    """
+    if not os.path.exists(checkpoint):
+        raise"File doesn't exist {}".format(checkpoint)
+    checkpoint = torch.load(checkpoint)
+    model.load_state_dict(checkpoint['state_dict'])
+
+    if optimizer:
+        optimizer.load_state_dict(checkpoint['optim_dict'])
+
+    return checkpoint
 
 def safe_makedir(path):
     """Make directory given the path if it doesn't already exist
