@@ -1,0 +1,6 @@
+numpy
+Pillow
+torch>=0.3
+pandas
+tabulate
+tqdm
