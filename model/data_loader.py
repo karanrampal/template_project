@@ -40,7 +40,7 @@ class MyDataset(Dataset):
         Args:
             idx: (int) index in [0, 1, ..., size_of_dataset-1]
         Returns:
-            image: (Tensor) transformed image
+            image: (torch.Tensor) transformed image
             label: (int) corresponding label of image
         """
         image = Image.open(self.data[idx, 0])
