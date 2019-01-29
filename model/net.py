@@ -17,10 +17,10 @@ class Net(tnn.Module):
         """
         super(Net, self).__init__()
 
-        self.conv1 = tnn.Conv2d(3, params.num_channels, 3, stride=1, padding=1)
+        self.conv1 = tnn.Conv2d(1, params.num_channels, 3, stride=1, padding=1)
         self.bn1 = tnn.BatchNorm2d(params.num_channels)
 
-        self.fc1 = tnn.Linear(params.num_channels, 10)
+        self.fc1 = tnn.Linear(params.num_channels*28*28, 10)
         self.dropout_rate = params.dropout_rate
 
     def forward(self, x):
@@ -31,6 +31,7 @@ class Net(tnn.Module):
             out: (torch.Tensor) output of the network forward pass
         """
         x = self.bn1(self.conv1(x))
+        x = x.view(x.size(0), -1)
         x = F.dropout(F.relu(self.fc1(x)),
                       p=self.dropout_rate,
                       training=self.training)
