@@ -32,8 +32,7 @@ def launch_training_job(model_dir, data_dir, job_name, params):
     """
     # Create a new folder in parent_dir with unique_name "job_name"
     model_dir = os.path.join(model_dir, job_name)
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+    utils.safe_makedir(model_dir)
 
     # Write parameters in json file
     json_path = os.path.join(model_dir, 'params.json')
