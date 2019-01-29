@@ -20,7 +20,7 @@ class Net(tnn.Module):
         self.conv1 = tnn.Conv2d(3, params.num_channels, 3, stride=1, padding=1)
         self.bn1 = tnn.BatchNorm2d(params.num_channels)
 
-        self.fc1 = tnn.Linear(self.num_channels, 10)
+        self.fc1 = tnn.Linear(params.num_channels, 10)
         self.dropout_rate = params.dropout_rate
 
     def forward(self, x):
