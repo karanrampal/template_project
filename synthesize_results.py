@@ -12,7 +12,8 @@ def args_parser():
     """Parse command line arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--parent_dir', default='experiments',
+    parser.add_argument('--parent_dir',
+                        default='experiments',
                         help='Directory containing results of experiments')
     return parser.parse_args()
 

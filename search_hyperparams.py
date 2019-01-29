@@ -15,9 +15,11 @@ def args_parser():
     """Parse command line arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--parent_dir', default='experiments/learning_rate',
+    parser.add_argument('--parent_dir',
+                        default='experiments/learning_rate',
                         help='Directory containing params.json')
-    parser.add_argument('--data_dir', default='../datasets/MNIST',
+    parser.add_argument('--data_dir',
+                        default='../datasets/MNIST',
                         help="Directory containing the dataset")
     return parser.parse_args()
 
