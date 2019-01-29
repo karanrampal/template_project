@@ -21,7 +21,7 @@ def args_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',
-                        default='./data/MNIST',
+                        default='../datasets/MNIST',
                         help="Directory containing the dataset")
     parser.add_argument('--model_dir',
                         default='experiments/base_model',
@@ -34,7 +34,7 @@ def args_parser():
 
 
 def train(model, optimizer, criterion, dataloader, metrics, params):
-    """Train the model
+    """Train the model.
     Args:
         model: (torch.nn.Module) the neural network
         optimizer: (torch.optim) optimizer for parameters of model
@@ -45,28 +45,22 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
     Returns:
         output: (torch.Tensor) output of the model
     """
-
     # set model to training mode
     model.train()
-
-    # summary for current training loop and a running average object for loss
     summ = []
     loss_avg = 0.0
 
     # Use tqdm for progress bar
     data_iterator = tqdm(dataloader, unit='batch')
-    for i, (train_batch, _) in enumerate(data_iterator):
-
-        # flatten the input
-        train_batch = train_batch.view(train_batch.size(0), -1)
-
+    for i, (train_batch, labels) in enumerate(data_iterator):
         # move to GPU if available
         if params.cuda:
             train_batch = train_batch.to(params.device)
+            labels = labels.to(params.device)
 
         # compute model output and loss
         output_batch = model(train_batch)
-        loss = criterion(output_batch, train_batch)
+        loss = criterion(output_batch, labels)
 
         # clear previous gradients, compute gradients of all variables wrt loss
         optimizer.zero_grad()
@@ -78,10 +72,11 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
         # Evaluate summaries only once in a while
         if i % params.save_summary_steps == 0:
             # extract data from torch Variable, move to cpu, convert to numpy arrays
-            output_batch = output_batch.data.cpu().numpy()
+            output_batch = output_batch.cpu().detach().numpy()
+            labels = labels.cpu().detach().numpy()
 
             # compute all metrics on this batch
-            summary_batch = {metric:metrics[metric](output_batch, train_batch.data.cpu().numpy())
+            summary_batch = {metric:metrics[metric](output_batch, labels)
                              for metric in metrics}
             summary_batch['loss'] = loss.item()
             summ.append(summary_batch)
@@ -89,7 +84,7 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
         # update the average loss
         loss_avg += loss.item()
 
-        data_iterator.set_postfix(loss='{:05.3f}'.format(loss_avg/float(i)))
+        data_iterator.set_postfix(loss='{:05.3f}'.format(loss_avg/float(i+1)))
 
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}

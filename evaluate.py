@@ -53,8 +53,8 @@ def evaluate(model, criterion, dataloader, metrics, params):
         loss = criterion(output, labels)
 
         # detach and move to cpu, convert to numpy arrays
-        output = output.data.cpu().numpy()
-        labels = labels.data.cpu().numpy()
+        output = output.cpu().detach().numpy()
+        labels = labels.cpu().detach().numpy()
 
         # compute all metrics on this batch
         summary_batch = {metric: metrics[metric](output, labels) for metric in metrics}
