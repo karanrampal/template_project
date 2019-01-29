@@ -184,7 +184,7 @@ def main():
     # Define the model and optimizer
     model = Net(params)
     if params.cuda:
-        model = model.cuda()
+        model = model.to(params.device)
 
     optimizer = opt.Adam(model.parameters(), lr=params.learning_rate)
 
