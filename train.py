@@ -21,7 +21,7 @@ def args_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',
-                        default='../datasets/MNIST',
+                        default='./data/MNIST',
                         help="Directory containing the dataset")
     parser.add_argument('--model_dir',
                         default='experiments/base_model',
