@@ -6,9 +6,9 @@ import logging
 import os
 
 import numpy as np
-import torch
-import torch.optim as opt
 from tqdm import tqdm
+import torch
+from torch.utils.tensorboard import SummaryWriter
 
 import utils
 from model.net import Net, loss_fn, get_metrics
@@ -21,7 +21,7 @@ def args_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',
-                        default='./data/MNIST',
+                        default='../datasets/',
                         help="Directory containing the dataset")
     parser.add_argument('--model_dir',
                         default='experiments/base_model',
@@ -33,7 +33,7 @@ def args_parser():
     return parser.parse_args()
 
 
-def train(model, optimizer, criterion, dataloader, metrics, params):
+def train(model, optimizer, criterion, dataloader, metrics, params, writer, epoch):
     """Train the model.
     Args:
         model: (torch.nn.Module) the neural network
@@ -42,6 +42,8 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
         dataloader: (DataLoader) an object that fetches training data
         metrics: (dict) a dictionary of metrics
         params: (Params) hyperparameters
+        writer : (SummaryWriter) Summary writer for tensorboard
+        epoch: (int) Value of Epoch
     Returns:
         output: (torch.Tensor) output of the model
     """
@@ -81,6 +83,12 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
             summary_batch['loss'] = loss.item()
             summ.append(summary_batch)
 
+            # Add to tensorboard
+            writer.add_scalars('training',
+                               {'loss': summary_batch['loss'],
+                                'acc': summary_batch['accuracy']},
+                               epoch * len(data_iterator) + i)
+
         # update the average loss
         loss_avg += loss.item()
 
@@ -93,7 +101,7 @@ def train(model, optimizer, criterion, dataloader, metrics, params):
 
 
 def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, criterion, metrics,
-                       params, model_dir, restore_file=None):
+                       params, model_dir, writer, restore_file=None):
     """Train the model and evaluate every epoch.
     Args:
         model: (torch.nn.Module) the neural network
@@ -104,6 +112,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, crite
         metrics: (dict) a dictionary of metric functions
         params: (Params) hyperparameters
         model_dir: (string) directory containing config, weights and log
+        writer : (SummaryWriter) Summary writer for tensorboard
         restore_file: (string) optional name of file to restore, .pth.tar
     """
     # reload weights from restore_file if specified
@@ -119,10 +128,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, crite
         logging.info("Epoch %d / %d", epoch + 1, params.num_epochs)
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, criterion, train_dataloader, metrics, params)
+        train(model, optimizer, criterion, train_dataloader, metrics, params, writer, epoch)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, criterion, val_dataloader, metrics, params)
+        val_metrics = evaluate(model, criterion, val_dataloader, metrics, params, writer, epoch)
 
         val_acc = val_metrics['accuracy'] if 'accuracy' in val_metrics else 0.0
         is_best = val_acc >= best_val_acc
@@ -157,6 +166,9 @@ def main():
     assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)
 
+    # Create summary writer for use with tensorboard
+    writer = SummaryWriter(os.path.join(args.model_dir, 'runs'))
+
     # use GPU if available
     params.cuda = torch.cuda.is_available()
 
@@ -185,8 +197,9 @@ def main():
     model = Net(params)
     if params.cuda:
         model = model.to(params.device)
+    writer.add_graph(model, next(iter(train_dl))[0])
 
-    optimizer = opt.Adam(model.parameters(), lr=params.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
     criterion = loss_fn
@@ -195,7 +208,8 @@ def main():
     # Train the model
     logging.info("Starting training for %d epoch(s)", params.num_epochs)
     train_and_evaluate(model, train_dl, val_dl, optimizer, criterion, metrics, params,
-                       args.model_dir, args.restore_file)
+                       args.model_dir, writer, args.restore_file)
+    writer.close()
 
 
 if __name__ == '__main__':

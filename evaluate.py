@@ -7,6 +7,7 @@ import os
 
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 import utils
 from model.net import Net, loss_fn, get_metrics
 import model.data_loader as d_l
@@ -17,7 +18,7 @@ def args_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',
-                        default='./data/MNIST',
+                        default='../datasets/',
                         help="Directory containing the dataset")
     parser.add_argument('--model_dir',
                         default='experiments/base_model',
@@ -28,7 +29,7 @@ def args_parser():
     return parser.parse_args()
 
 
-def evaluate(model, criterion, dataloader, metrics, params):
+def evaluate(model, criterion, dataloader, metrics, params, writer, epoch):
     """Evaluate the model on `num_steps` batches.
     Args:
         model: (torch.nn.Module) the neural network
@@ -37,12 +38,14 @@ def evaluate(model, criterion, dataloader, metrics, params):
         metrics: (dict) a dictionary of functions that compute a metric
         params: (Params) hyperparameters
         num_steps: (int) number of batches to train on, each of size params.batch_size
+        writer : (SummaryWriter) Summary writer for tensorboard
+        epoch: (int) Value of Epoch
     """
     # put model in evaluation mode
     model.eval()
     summ = []
 
-    for inp_data, labels in dataloader:
+    for i, (inp_data, labels) in enumerate(dataloader):
         # move data to GPU if possible
         if params.cuda:
             inp_data = inp_data.to(params.device)
@@ -61,6 +64,12 @@ def evaluate(model, criterion, dataloader, metrics, params):
         summary_batch['loss'] = loss.item()
         summ.append(summary_batch)
 
+        # Add to tensorboard
+        writer.add_scalars('testing',
+                           {'loss': summary_batch['loss'],
+                            'acc': summary_batch['accuracy']},
+                           epoch * len(dataloader) + i)
+
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
@@ -76,6 +85,9 @@ def main():
     json_path = os.path.join(args.model_dir, 'params.json')
     assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
     params = utils.Params(json_path)
+
+    # Create summary writer for use with tensorboard
+    writer = SummaryWriter(os.path.join(args.model_dir, 'runs'))
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()     # use GPU is available
@@ -103,6 +115,7 @@ def main():
     model = Net(params)
     if params.cuda:
         model = model.to(params.device)
+    writer.add_graph(model, next(iter(test_dl))[0])
 
     criterion = loss_fn
     metrics = get_metrics()
@@ -113,9 +126,11 @@ def main():
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate
-    test_metrics = evaluate(model, criterion, test_dl, metrics, params)
+    test_metrics = evaluate(model, criterion, test_dl, metrics, params, writer, 0)
     save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
     utils.save_dict_to_json(test_metrics, save_path)
+
+    writer.close()
 
 
 if __name__ == '__main__':

@@ -99,4 +99,4 @@ def safe_makedir(path):
         print("Directory doesn't exist! Making directory {0}.".format(path))
         os.makedirs(path)
     else:
-        print("Directory Exists!")
+        print("Directory {0} Exists!".format(path))

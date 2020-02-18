@@ -19,7 +19,7 @@ def args_parser():
                         default='experiments/learning_rate',
                         help='Directory containing params.json')
     parser.add_argument('--data_dir',
-                        default='./data/MNIST',
+                        default='../datasets',
                         help="Directory containing the dataset")
     return parser.parse_args()
 
