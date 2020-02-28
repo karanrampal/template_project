@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluates the model"""
+"""Visualize the model"""
 
 import argparse
 import logging
@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import utils
-from model.net import Net, loss_fn, get_metrics
+from model.net import Net
 import model.data_loader as d_l
 
 
@@ -29,53 +29,73 @@ def args_parser():
     return parser.parse_args()
 
 
-def evaluate(model, criterion, dataloader, metrics, params, writer, epoch):
-    """Evaluate the model on `num_steps` batches.
+def visualize(model, dataloader, params, writer, num_proj=100):
+    """Evaluate the model visualize the results.
     Args:
         model: (torch.nn.Module) the neural network
-        criterion: a function that computes the loss for the batch
         dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches data
-        metrics: (dict) a dictionary of functions that compute a metric
         params: (Params) hyperparameters
-        num_steps: (int) number of batches to train on, each of size params.batch_size
-        writer : (SummaryWriter) Summary writer for tensorboard
-        epoch: (int) Value of Epoch
+        writer: (SummaryWriter) Summary writer for tensorboard
+        num_proj: (int) Number of images to project
     """
     # put model in evaluation mode
     model.eval()
-    summ = []
+    class_probs = []
+    class_preds = []
+    embeddings = []
+    inputs = []
+    labels = []
 
     with torch.no_grad():
-        for i, (inp_data, labels) in enumerate(dataloader):
+        for _, input_data in enumerate(dataloader):
+            inp_data, label = input_data
             # move data to GPU if possible
             if params.cuda:
                 inp_data = inp_data.to(params.device)
-                labels = labels.to(params.device)
+                label = label.to(params.device)
 
             # compute model output
-            _, output = model(inp_data)
-            loss = criterion(output, labels)
+            embed, output = model(inp_data)
+            _, preds = torch.max(output, 1)
 
-            # detach and move to cpu, convert to numpy arrays
-            output = output.cpu().numpy()
-            labels = labels.cpu().numpy()
+            # move to cpu
+            for x in [output, preds, embed, inp_data, label]:
+                x = x.cpu()
 
-            # compute all metrics on this batch
-            summary_batch = {metric: metrics[metric](output, labels) for metric in metrics}
-            summary_batch['loss'] = loss.item()
-            summ.append(summary_batch)
+            class_probs.append(output)
+            class_preds.append(preds)
+            embeddings.append(embed)
+            inputs.append(inp_data)
+            labels.append(label)
 
-            # Add to tensorboard
-            writer.add_scalars('testing',
-                               {'loss': summary_batch['loss'],
-                                'acc': summary_batch['accuracy']},
-                               epoch * len(dataloader) + i)
 
-    # compute mean of all metrics in summary
-    metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}
-    metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
-    logging.info("- Eval metrics : %s", metrics_string)
-    return metrics_mean
+    logging.info("- done.")
+
+    class_probs = torch.cat(class_probs)
+    class_preds = torch.cat(class_preds)
+    embeddings = torch.cat(embeddings)
+    labels = torch.cat(labels)
+    inputs = torch.cat(inputs)
+
+    # Add PR curve to tensorboard
+    logging.info("Add Precision-Recall in tensorboard...")
+    for i in range(params.num_classes):
+        tensorboard_probs = torch.exp(class_probs[:, i])
+        tensorboard_preds = class_preds == i
+
+        writer.add_pr_curve(str(i),
+                            tensorboard_preds,
+                            tensorboard_probs)
+
+    # Add random samples to the projector on tensorboard
+    logging.info("Add Projections in tensorboard...")
+
+    perm = np.random.randint(0, len(embeddings), num_proj)
+    labels = labels[perm]
+    class_labels = labels.tolist()
+    writer.add_embedding(mat=embeddings[perm, ...],
+                         metadata=class_labels,
+                         label_img=inputs[perm, ...])
 
 
 def main():
@@ -84,7 +104,7 @@ def main():
     # Load the parameters
     args = args_parser()
     json_path = os.path.join(args.model_dir, 'params.json')
-    assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
+    assert os.path.isfile(json_path), "No json config file found at {}".format(json_path)
     params = utils.Params(json_path)
 
     # Create summary writer for use with tensorboard
@@ -102,7 +122,7 @@ def main():
         params.device = "cpu"
 
     # Set the logger
-    utils.set_logger(os.path.join(args.model_dir, 'evaluate.log'))
+    utils.set_logger(os.path.join(args.model_dir, 'visualize.log'))
 
     logging.info("Loading the dataset...")
 
@@ -118,18 +138,13 @@ def main():
         model = model.to(params.device)
     writer.add_graph(model, next(iter(test_dl))[0])
 
-    criterion = loss_fn
-    metrics = get_metrics()
-
     logging.info("Starting evaluation")
 
     # Reload weights from the saved file
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
-    # Evaluate
-    test_metrics = evaluate(model, criterion, test_dl, metrics, params, writer, 0)
-    save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
-    utils.save_dict_to_json(test_metrics, save_path)
+    # Visuzlize
+    visualize(model, test_dl, params, writer)
 
     writer.close()
 

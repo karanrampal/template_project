@@ -44,8 +44,6 @@ def train(model, optimizer, criterion, dataloader, metrics, params, writer, epoc
         params: (Params) hyperparameters
         writer : (SummaryWriter) Summary writer for tensorboard
         epoch: (int) Value of Epoch
-    Returns:
-        output: (torch.Tensor) output of the model
     """
     # set model to training mode
     model.train()
