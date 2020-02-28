@@ -21,8 +21,8 @@ class Net(tnn.Module):
         self.conv2 = tnn.Conv2d(params.num_channels, params.num_channels*2, 3, stride=1, padding=1)
         self.bn1 = tnn.BatchNorm2d(params.num_channels)
 
-        self.fc1 = tnn.Linear(params.num_channels*2*14*14, 32)
-        self.fc2 = tnn.Linear(32, 10)
+        self.fc1 = tnn.Linear(params.num_channels*2*14*14, params.num_channels)
+        self.fc2 = tnn.Linear(params.num_channels, params.num_classes)
         self.dropout_rate = params.dropout_rate
 
     def forward(self, x):
@@ -36,11 +36,12 @@ class Net(tnn.Module):
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, 2, 2)
         x = x.view(x.size(0), -1)
-        x = F.dropout(F.relu(self.fc1(x)),
+        embed = self.fc1(x)
+        x = F.dropout(F.relu(embed),
                       p=self.dropout_rate,
                       training=self.training)
         x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
+        return embed, F.log_softmax(x, dim=1)
 
 
 def loss_fn(outputs, ground_truth):
@@ -51,7 +52,7 @@ def loss_fn(outputs, ground_truth):
     Returns:
         loss: (torch.Tensor) loss for all the inputs in the batch
     """
-    criterion = tnn.CrossEntropyLoss()
+    criterion = tnn.NLLLoss()
     loss = criterion(outputs, ground_truth)
     return loss
 

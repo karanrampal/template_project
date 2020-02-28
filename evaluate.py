@@ -45,30 +45,31 @@ def evaluate(model, criterion, dataloader, metrics, params, writer, epoch):
     model.eval()
     summ = []
 
-    for i, (inp_data, labels) in enumerate(dataloader):
-        # move data to GPU if possible
-        if params.cuda:
-            inp_data = inp_data.to(params.device)
-            labels = labels.to(params.device)
+    with torch.no_grad():
+        for i, (inp_data, labels) in enumerate(dataloader):
+            # move data to GPU if possible
+            if params.cuda:
+                inp_data = inp_data.to(params.device)
+                labels = labels.to(params.device)
 
-        # compute model output
-        output = model(inp_data)
-        loss = criterion(output, labels)
+            # compute model output
+            _, output = model(inp_data)
+            loss = criterion(output, labels)
 
-        # detach and move to cpu, convert to numpy arrays
-        output = output.cpu().detach().numpy()
-        labels = labels.cpu().detach().numpy()
+            # detach and move to cpu, convert to numpy arrays
+            output = output.cpu().numpy()
+            labels = labels.cpu().numpy()
 
-        # compute all metrics on this batch
-        summary_batch = {metric: metrics[metric](output, labels) for metric in metrics}
-        summary_batch['loss'] = loss.item()
-        summ.append(summary_batch)
+            # compute all metrics on this batch
+            summary_batch = {metric: metrics[metric](output, labels) for metric in metrics}
+            summary_batch['loss'] = loss.item()
+            summ.append(summary_batch)
 
-        # Add to tensorboard
-        writer.add_scalars('testing',
-                           {'loss': summary_batch['loss'],
-                            'acc': summary_batch['accuracy']},
-                           epoch * len(dataloader) + i)
+            # Add to tensorboard
+            writer.add_scalars('testing',
+                               {'loss': summary_batch['loss'],
+                                'acc': summary_batch['accuracy']},
+                               epoch * len(dataloader) + i)
 
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}

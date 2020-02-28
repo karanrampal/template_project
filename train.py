@@ -61,7 +61,7 @@ def train(model, optimizer, criterion, dataloader, metrics, params, writer, epoc
             labels = labels.to(params.device)
 
         # compute model output and loss
-        output_batch = model(train_batch)
+        _, output_batch = model(train_batch)
         loss = criterion(output_batch, labels)
 
         # clear previous gradients, compute gradients of all variables wrt loss
