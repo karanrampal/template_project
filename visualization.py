@@ -41,7 +41,6 @@ def visualize(model, dataloader, params, writer, num_proj=100):
     # put model in evaluation mode
     model.eval()
     class_probs = []
-    class_preds = []
     embeddings = []
     inputs = []
     labels = []
@@ -56,14 +55,12 @@ def visualize(model, dataloader, params, writer, num_proj=100):
 
             # compute model output
             embed, output = model(inp_data)
-            _, preds = torch.max(output, 1)
 
             # move to cpu
-            for x in [output, preds, embed, inp_data, label]:
+            for x in [output, embed, inp_data, label]:
                 x = x.cpu()
 
             class_probs.append(output)
-            class_preds.append(preds)
             embeddings.append(embed)
             inputs.append(inp_data)
             labels.append(label)
@@ -71,8 +68,8 @@ def visualize(model, dataloader, params, writer, num_proj=100):
 
     logging.info("- done.")
 
-    class_probs = torch.cat(class_probs)
-    class_preds = torch.cat(class_preds)
+    class_probs = torch.exp(torch.cat(class_probs))
+    _, class_preds = torch.max(class_probs, 1)
     embeddings = torch.cat(embeddings)
     labels = torch.cat(labels)
     inputs = torch.cat(inputs)
@@ -80,7 +77,7 @@ def visualize(model, dataloader, params, writer, num_proj=100):
     # Add PR curve to tensorboard
     logging.info("Add Precision-Recall in tensorboard...")
     for i in range(params.num_classes):
-        tensorboard_probs = torch.exp(class_probs[:, i])
+        tensorboard_probs = class_probs[:, i]
         tensorboard_preds = class_preds == i
 
         writer.add_pr_curve(str(i),
@@ -136,7 +133,6 @@ def main():
     model = Net(params)
     if params.cuda:
         model = model.to(params.device)
-    writer.add_graph(model, next(iter(test_dl))[0])
 
     logging.info("Starting evaluation")
 
