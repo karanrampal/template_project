@@ -105,7 +105,7 @@ def main():
     params = utils.Params(json_path)
 
     # Create summary writer for use with tensorboard
-    writer = SummaryWriter(os.path.join(args.model_dir, 'runs'))
+    writer = SummaryWriter(os.path.join(args.model_dir, 'runs', 'visualize'))
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()     # use GPU is available
