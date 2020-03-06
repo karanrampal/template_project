@@ -23,6 +23,7 @@ search_hyperparams.py
 synthesize_results.py
 train.py
 utils.py
+visualization.py
 ```
 
 ## Usage
@@ -32,6 +33,11 @@ git clone <url> <newprojname>
 cd <newprojname>
 rm -r .git
 git init
+```
+To run visualization,
+```
+python visualization.py
+tensorboard --logdir=experiments/
 ```
 
 ## Requirements
