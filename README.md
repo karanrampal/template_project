@@ -7,8 +7,8 @@ Contains starter code for model creation, training, testing and evaluation using
 ## Directory structure
 Structure of the project
 ```
-.github
-    workflows
+.github/
+    workflows/
         main.yaml
 experiments/
     base_model/
@@ -19,6 +19,8 @@ model/
     __init__.py
     data_loader.py
     net.py
+tests/
+    __init__.py
 .gitignore
 evaluate.py
 LICENSE
