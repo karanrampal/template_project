@@ -11,8 +11,8 @@ format:
 lint:
 	pylint --disable=R,C,E1101,W0221 model tests train.py visualization.py\
 		utils.py evaluate.py search_hyperparams.py synthesize_results.py
-	# lint Dockerfile
-	# docker run --rm -i hadolint/hadolint < Dockerfile
+	#lint Dockerfile
+	#docker run --rm -i hadolint/hadolint < Dockerfile
 
 clean:
 	rm -rf __pycache__ .coverage

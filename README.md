@@ -7,18 +7,23 @@ Contains starter code for model creation, training, testing and evaluation using
 ## Directory structure
 Structure of the project
 ```
+.github
+    workflows
+        main.yaml
 experiments/
     base_model/
+        params.json
+    param_search/
         params.json
 model/
     __init__.py
     data_loader.py
     net.py
 .gitignore
+evaluate.py
 LICENSE
 Makefile
 README.md
-evaluate.py
 requirements.txt
 search_hyperparams.py
 synthesize_results.py
