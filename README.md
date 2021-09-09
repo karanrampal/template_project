@@ -16,6 +16,7 @@ model/
     net.py
 .gitignore
 LICENSE
+Makefile
 README.md
 evaluate.py
 requirements.txt

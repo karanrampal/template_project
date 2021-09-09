@@ -1,7 +1,12 @@
 numpy
 Pillow
-torch>=1.4
+torch
+torchvision
 pandas
 tabulate
 tqdm
 tensorboard
+pylint
+pytest
+black
+pytest-cov
