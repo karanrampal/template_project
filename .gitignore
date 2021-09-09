@@ -10,3 +10,13 @@ build/
 
 # pyinstaller
 *.spec
+
+# Unit test coverage
+.pytest_cache/
+.coverage
+
+# Run
+runs/
+*.log
+*.pth.tar
+metrics_*.json
