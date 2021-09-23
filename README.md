@@ -29,6 +29,7 @@ README.md
 requirements.txt
 search_hyperparams.py
 synthesize_results.py
+tox.ini
 train.py
 utils.py
 visualization.py
@@ -53,7 +54,7 @@ I used Anaconda with python3,
 
 ```
 conda create -n <yourenvname> python=<3.x>
-source activate <yourenvname>
+conda activate <yourenvname>
 conda install -n <yourenvname> --file requirements.txt
 ```
 
